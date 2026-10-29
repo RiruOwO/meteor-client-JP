@@ -81,6 +81,18 @@ public class GuiRenderer {
         TEXTURE = TEXTURE_PACKER.pack();
     }
 
+    public void pushScale(double centerX, double centerY, double scale) {
+        var matrices = graphics.pose();
+        matrices.pushMatrix();
+        matrices.translate((float) centerX, (float) centerY);
+        matrices.scale((float) scale);
+        matrices.translate((float) -centerX, (float) -centerY);
+    }
+
+    public void popScale() {
+        graphics.pose().popMatrix();
+    }
+
     public void begin(GuiGraphicsExtractor graphics) {
         this.graphics = graphics;
         this.graphics.nextStratum();

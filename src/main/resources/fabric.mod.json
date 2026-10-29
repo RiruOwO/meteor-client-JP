@@ -3,11 +3,9 @@
   "name": "Meteor Client",
   "id": "meteor-client",
   "version": "${version}",
-  "description": "Based utility mod.",
+  "description": "minecraft modded client",
   "authors": [
-    "MineGame159",
-    "squidoodly",
-    "seasnail"
+    "skid RiruQwQ"
   ],
   "contact": {
     "homepage": "https://meteorclient.com",

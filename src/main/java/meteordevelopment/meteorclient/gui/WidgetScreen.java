@@ -286,7 +286,9 @@ public abstract class WidgetScreen extends Screen {
 
         RENDERER.begin(graphics);
         RENDERER.setAlpha(animProgress);
+        beforeRootRender(RENDERER);
         root.render(RENDERER, mouseX, mouseY, delta / 20);
+        afterRootRender(RENDERER);
         RENDERER.setAlpha(1);
         RENDERER.end();
 
@@ -310,6 +312,12 @@ public abstract class WidgetScreen extends Screen {
     }
 
     protected void onRenderBefore(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+    }
+
+    protected void beforeRootRender(GuiRenderer renderer) {
+    }
+
+    protected void afterRootRender(GuiRenderer renderer) {
     }
 
     @Override

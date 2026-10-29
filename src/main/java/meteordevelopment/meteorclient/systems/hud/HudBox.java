@@ -123,8 +123,8 @@ public class HudBox implements ISerializable<HudBox> {
     public double alignX(double selfWidth, double width, Alignment alignment) {
         XAnchor anchor = xAnchor;
 
-        if (alignment == Alignment.Left) anchor = XAnchor.Left;
-        else if (alignment == Alignment.Center) anchor = XAnchor.Center;
+        if (alignment == Alignment.Center) anchor = XAnchor.Center;
+        else if (alignment == Alignment.Left) anchor = XAnchor.Left;
         else if (alignment == Alignment.Right) anchor = XAnchor.Right;
 
         return switch (anchor) {

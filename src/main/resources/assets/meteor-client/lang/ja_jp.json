@@ -168,5 +168,6 @@
   "module.server-spoof.description": "接続時のクライアントブランド、リソースパック、チャンネル情報を偽装します。",
   "module.sound-blocker.description": "指定した効果音やゲーム内サウンドの再生をミュートします。",
   "module.spam.description": "設定したメッセージをチャット欄に自動で連投します。",
-  "module.swarm.description": "1つの親クライアントから複数のMeteorインスタンス（サブアカウント等）を一括制御します。"
+  "module.swarm.description": "1つの親クライアントから複数のMeteorインスタンス（サブアカウント等）を一括制御します。",
+  "module.anti-web.description": "クモの巣の中へ歩いて入らないようにする"
 }

@@ -25,6 +25,7 @@ import meteordevelopment.meteorclient.systems.System;
 import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.modules.combat.*;
+import meteordevelopment.meteorclient.systems.modules.custom.AntiWeb;
 import meteordevelopment.meteorclient.systems.modules.misc.*;
 import meteordevelopment.meteorclient.systems.modules.misc.swarm.Swarm;
 import meteordevelopment.meteorclient.systems.modules.movement.*;
@@ -81,6 +82,7 @@ public class Modules extends System<Modules> {
         initRender();
         initWorld();
         initMisc();
+        initNew();
     }
 
     @Override
@@ -593,5 +595,9 @@ public class Modules extends System<Modules> {
         add(new SoundBlocker());
         add(new Spam());
         add(new Swarm());
+    }
+
+    private void initNew() {
+        add(new AntiWeb());
     }
 }
