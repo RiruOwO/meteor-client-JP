@@ -6,6 +6,7 @@
 package meteordevelopment.meteorclient.settings;
 
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.Lang;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.misc.IGetter;
 import meteordevelopment.meteorclient.utils.misc.ISerializable;
@@ -36,7 +37,7 @@ public abstract class Setting<T> implements IGetter<T>, ISerializable<T> {
     public Setting(String name, String description, T defaultValue, Consumer<T> onChanged, Consumer<Setting<T>> onModuleActivated, IVisible visible) {
         this.name = name;
         this.title = Utils.nameToTitle(name);
-        this.description = description;
+        this.description = Lang.setting(description);
         this.defaultValue = defaultValue;
         this.onChanged = onChanged;
         this.onModuleActivated = onModuleActivated;

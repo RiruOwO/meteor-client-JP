@@ -12,6 +12,7 @@ import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.settings.Settings;
 import meteordevelopment.meteorclient.systems.config.Config;
+import meteordevelopment.meteorclient.utils.Lang;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.misc.ISerializable;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
@@ -58,7 +59,8 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
         this.category = category;
         this.name = name;
         this.title = Utils.nameToTitle(name);
-        this.description = description;
+        this.description = Lang.get("module." + name + ".description", description);
+        Lang.record(name, Utils.nameToTitle(name), description);
         this.aliases = aliases;
         this.color = Color.fromHsv(Utils.random(0.0, 360.0), 0.35, 1);
 
