@@ -6,10 +6,7 @@
 package meteordevelopment.meteorclient.gui;
 
 import meteordevelopment.meteorclient.gui.renderer.packer.GuiTexture;
-import meteordevelopment.meteorclient.gui.screens.ModuleScreen;
-import meteordevelopment.meteorclient.gui.screens.ModulesScreen;
-import meteordevelopment.meteorclient.gui.screens.NotebotSongsScreen;
-import meteordevelopment.meteorclient.gui.screens.ProxiesScreen;
+import meteordevelopment.meteorclient.gui.screens.*;
 import meteordevelopment.meteorclient.gui.screens.accounts.AccountsScreen;
 import meteordevelopment.meteorclient.gui.tabs.TabScreen;
 import meteordevelopment.meteorclient.gui.utils.CharFilter;
@@ -259,8 +256,12 @@ public abstract class GuiTheme implements ISerializable<GuiTheme> {
         return new ModulesScreen(this);
     }
 
+    public TabScreen listModulesScreen() {
+        return new ListModulesScreen(this);
+    }
+
     public boolean isModulesScreen(Screen screen) {
-        return screen instanceof ModulesScreen;
+        return screen instanceof ModulesScreen || screen instanceof ListModulesScreen;
     }
 
     public WidgetScreen moduleScreen(Module module) {

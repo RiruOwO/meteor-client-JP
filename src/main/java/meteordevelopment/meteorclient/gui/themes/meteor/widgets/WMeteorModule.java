@@ -6,6 +6,7 @@
 package meteordevelopment.meteorclient.gui.themes.meteor.widgets;
 
 import meteordevelopment.meteorclient.gui.renderer.GuiRenderer;
+import meteordevelopment.meteorclient.gui.screens.ListModulesScreen;
 import meteordevelopment.meteorclient.gui.themes.meteor.MeteorGuiTheme;
 import meteordevelopment.meteorclient.gui.themes.meteor.MeteorWidget;
 import meteordevelopment.meteorclient.gui.utils.AlignmentX;
@@ -59,7 +60,10 @@ public class WMeteorModule extends WPressable implements MeteorWidget {
     @Override
     protected void onPressed(int button) {
         if (button == MOUSE_BUTTON_LEFT) module.toggle();
-        else if (button == MOUSE_BUTTON_RIGHT) mc.gui.setScreen(theme.moduleScreen(module));
+        else if (button == MOUSE_BUTTON_RIGHT) {
+            if (mc.gui.screen() instanceof ListModulesScreen s) s.openSettings(module);
+            else mc.gui.setScreen(theme.moduleScreen(module));
+        }
     }
 
     @Override
@@ -90,5 +94,9 @@ public class WMeteorModule extends WPressable implements MeteorWidget {
         }
 
         renderer.text(title, x, y + pad, theme.textColor.get(), false);
+        double size = theme.textHeight();
+        double ix = this.x + width - pad - size;
+        double iy = this.y + (height - size) / 2;
+        renderer.quad(ix, iy, size, size, module.isActive() ? theme.accentColor.get() : theme.textSecondaryColor());
     }
 }

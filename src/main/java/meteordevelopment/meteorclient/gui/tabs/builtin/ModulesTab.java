@@ -18,7 +18,7 @@ public class ModulesTab extends Tab {
 
     @Override
     public TabScreen createScreen(GuiTheme theme) {
-        return theme.modulesScreen();
+        return theme.listModulesScreen();
     }
 
     @Override
