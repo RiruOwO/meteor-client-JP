@@ -608,6 +608,6 @@ public class Modules extends System<Modules> {
     }
 
     private void initNew() {
-        add(new FreeHome());
+
     }
 }

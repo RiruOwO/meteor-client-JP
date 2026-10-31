@@ -128,10 +128,18 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void antiAim$modifyRenderState(LivingEntity entity, LivingEntityRenderState state, float tickDelta, CallbackInfo ci) {
         AntiAim antiAim = Modules.get().get(AntiAim.class);
+
         if (antiAim != null && antiAim.isActive() && entity == mc.player) {
-            // 状態（State）の向きを直接書き換える
-            state.bodyRot += antiAim.bodyOffset.get().floatValue();
-            state.yRot += antiAim.headOffset.get().floatValue();
+            // ★ 修正：モードに応じて適切なGetterを呼ぶ
+            if (antiAim.isSpinMode()) {
+                // スピンモード：回転角度を適用
+                state.bodyRot += antiAim.getBodyYawOffset();
+                state.yRot += antiAim.getHeadYawOffset();
+            } else {
+                // スタティックモード：スライダーの数値を適用
+                state.bodyRot += antiAim.bodyOffset.get().floatValue();
+                state.yRot += antiAim.headOffset.get().floatValue();
+            }
         }
     }
 }
