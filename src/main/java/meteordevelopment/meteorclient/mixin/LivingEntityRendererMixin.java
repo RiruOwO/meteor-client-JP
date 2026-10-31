@@ -5,9 +5,16 @@
 
 package meteordevelopment.meteorclient.mixin;
 
+import meteordevelopment.meteorclient.systems.modules.custom.AntiAim;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.world.entity.LivingEntity;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import static meteordevelopment.meteorclient.MeteorClient.mc;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.blaze3d.vertex.PoseStack;
 import meteordevelopment.meteorclient.mixininterface.IEntityRenderState;
 import meteordevelopment.meteorclient.systems.modules.Modules;
@@ -33,6 +40,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
@@ -114,6 +122,16 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         if (chams.shouldRender(livingEntity)) {
             glPolygonOffset(1.0f, 1100000.0f);
             glDisable(GL_POLYGON_OFFSET_FILL);
+        }
+    }
+
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void antiAim$modifyRenderState(LivingEntity entity, LivingEntityRenderState state, float tickDelta, CallbackInfo ci) {
+        AntiAim antiAim = Modules.get().get(AntiAim.class);
+        if (antiAim != null && antiAim.isActive() && entity == mc.player) {
+            // 状態（State）の向きを直接書き換える
+            state.bodyRot += antiAim.bodyOffset.get().floatValue();
+            state.yRot += antiAim.headOffset.get().floatValue();
         }
     }
 }

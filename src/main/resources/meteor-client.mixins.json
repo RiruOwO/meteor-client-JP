@@ -198,7 +198,8 @@
     "VulkanDeviceMixin",
     "WebBlockMixin",
     "WingsLayerMixin",
-    "WorldBorderMixin"
+    "WorldBorderMixin",
+    "ShulkerBoxBlockEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

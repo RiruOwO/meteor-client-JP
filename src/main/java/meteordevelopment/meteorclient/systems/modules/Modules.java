@@ -25,7 +25,7 @@ import meteordevelopment.meteorclient.systems.System;
 import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.modules.combat.*;
-import meteordevelopment.meteorclient.systems.modules.custom.AntiWeb;
+import meteordevelopment.meteorclient.systems.modules.custom.*;
 import meteordevelopment.meteorclient.systems.modules.misc.*;
 import meteordevelopment.meteorclient.systems.modules.misc.swarm.Swarm;
 import meteordevelopment.meteorclient.systems.modules.movement.*;
@@ -437,6 +437,8 @@ public class Modules extends System<Modules> {
         add(new SelfTrap());
         add(new SelfWeb());
         add(new Surround());
+        // new
+        add(new AntiWeb());
     }
 
     private void initPlayer() {
@@ -471,6 +473,8 @@ public class Modules extends System<Modules> {
         add(new Reach());
         add(new Rotation());
         add(new SpeedMine());
+        //
+        add(new PacketEat());
     }
 
     private void initMovement() {
@@ -546,6 +550,10 @@ public class Modules extends System<Modules> {
         add(new WeatherChanger());
         add(new Xray());
         add(new Zoom());
+        //
+        add(new ChinaHat());
+        add(new AntiAim());
+        add(new ShulkerPreview());
     }
 
     private void initWorld() {
@@ -571,6 +579,8 @@ public class Modules extends System<Modules> {
         add(new SpawnProofer());
         add(new Timer());
         add(new VeinMiner());
+        // new
+        add(new BedrockSeedfinder());
 
         if (BaritoneUtils.IS_AVAILABLE) {
             add(new Excavator());
@@ -598,6 +608,6 @@ public class Modules extends System<Modules> {
     }
 
     private void initNew() {
-        add(new AntiWeb());
+        add(new FreeHome());
     }
 }

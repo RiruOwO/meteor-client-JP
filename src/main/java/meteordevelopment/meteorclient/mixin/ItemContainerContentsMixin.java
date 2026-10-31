@@ -23,12 +23,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import meteordevelopment.meteorclient.mixininterface.IItemContainerContents;
 
 @Mixin(ItemContainerContents.class)
-public abstract class ItemContainerContentsMixin {
+public abstract class ItemContainerContentsMixin implements IItemContainerContents {
     @Shadow
     @Final
     private List<Optional<ItemStackTemplate>> items;
+
+    // 2. 新しくメソッドを追加（@Unique は不要）
+    @Override
+    public List<Optional<ItemStackTemplate>> meteor$getItems() {
+        return this.items;
+    }
 
     @Inject(method = "addToTooltip", at = @At("HEAD"), cancellable = true)
     private void onAddToTooltip(Item.TooltipContext context, Consumer<Component> consumer, TooltipFlag flag, DataComponentGetter components, CallbackInfo ci) {

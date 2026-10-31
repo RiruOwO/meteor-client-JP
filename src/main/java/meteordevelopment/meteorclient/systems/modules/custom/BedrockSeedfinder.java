@@ -1,0 +1,197 @@
+package meteordevelopment.meteorclient.systems.modules.custom;
+
+import com.mojang.blaze3d.Blaze3D;
+import meteordevelopment.meteorclient.events.world.ChunkDataEvent;
+import meteordevelopment.meteorclient.gui.GuiTheme;
+import meteordevelopment.meteorclient.gui.widgets.WWidget;
+import meteordevelopment.meteorclient.gui.widgets.containers.WVerticalList;
+import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
+import meteordevelopment.meteorclient.settings.EnumSetting;
+import meteordevelopment.meteorclient.settings.FileSetting;
+import meteordevelopment.meteorclient.settings.Setting;
+import meteordevelopment.meteorclient.settings.SettingGroup;
+import meteordevelopment.meteorclient.systems.modules.Categories;
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.player.PlayerUtils;
+import meteordevelopment.meteorclient.utils.world.Dimension;
+import meteordevelopment.orbit.EventHandler;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Util;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.ChunkAccess;
+
+import java.io.*;
+import java.net.URI;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class BedrockSeedfinder extends Module {
+    private final SettingGroup sgGeneral = settings.getDefaultGroup();
+
+    private final Setting<YLevel> searchY = sgGeneral.add(new EnumSetting.Builder<YLevel>()
+        .name("y-level")
+        .description("get the bedrock from floor or ceiling?")
+        .defaultValue(YLevel.Floor)
+        .build()
+    );
+
+    private final Setting<WriteMode> writeMode = sgGeneral.add(new EnumSetting.Builder<WriteMode>()
+        .name("Write mode")
+        .description("""
+            - overwrite: Overwrites ALL of the contents of the file.
+            - append: Append to the file
+            """)
+        .defaultValue(WriteMode.overwrite)
+        .build()
+    );
+
+    private final Setting<File> customFileLocation = sgGeneral.add(new FileSetting.Builder()
+        .name("save-file")
+        .description("Output file for bedrock coordinates data")
+        .onChanged(this::isInvalidFile)
+        .build()
+    );
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private volatile BufferedWriter writer;
+    private int lines;
+    private File outputFile;
+
+    public BedrockSeedfinder() {
+        super(Categories.World,
+            "bedrock-seedfinder",
+            "Writes the position of bedrock in the nether in a file. meant for seed cracking.");
+    }
+
+    @Override
+    public WWidget getWidget(GuiTheme theme) {
+        WVerticalList l = theme.verticalList();
+        l.add(theme.label("This module is meant to be used for Nether Bedrock Cracker"));
+        l.add(theme.label("https://github.com/19MisterX98/Nether_Bedrock_Cracker/"));
+        WButton button = l.add(theme.button("open github repo")).widget();
+        button.action = () -> Util.getPlatform().openUri(URI.create("https://github.com/19MisterX98/Nether_Bedrock_Cracker/"));
+        return l;
+    }
+
+    @EventHandler
+    private void onChunkData(ChunkDataEvent event) {
+        executor.execute(() -> {
+            ChunkAccess c = event.chunk();
+            int y = searchY.get().getValue();
+            BlockPos.MutableBlockPos sPos = new BlockPos.MutableBlockPos();
+            for (int x = c.getPos().getMinBlockX(); x <= c.getPos().getMaxBlockX(); x++) {
+                for (int z = c.getPos().getMinBlockZ(); z <= c.getPos().getMaxBlockZ(); z++) {
+                    sPos.set(x, y, z);
+                    if (!c.getBlockState(sPos).is(Blocks.BEDROCK)) continue;
+                    if (writer == null) createWriter();
+                    try {
+                        writer.write(x + " " + y + " " + z + " Bedrock");
+                        writer.newLine();
+                        lines++;
+                    } catch (IOException e) {
+                        error(e.getMessage());
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onActivate() {
+        if (isInvalidFile(customFileLocation.get())) {
+            toggle();
+            return;
+        }
+        outputFile = customFileLocation.get();
+
+        if (PlayerUtils.getDimension() != Dimension.Nether)
+            warning("This module is only meant to be used in the nether");
+    }
+
+    @Override
+    public void onDeactivate() {
+        executor.execute(() -> {
+            try {
+                if (writer == null) return;
+                writer.flush();
+                writer.close();
+                MutableComponent message = Component.literal(String.format("Saved %d bedrock coordinates to: ", lines));
+                message.append(Component.literal(outputFile.getName())
+                    .withStyle(style -> style
+                        .applyFormat(ChatFormatting.YELLOW)
+                        .withClickEvent(new ClickEvent.OpenFile(outputFile))
+                        .withHoverEvent(new HoverEvent.ShowText(
+                            Component.literal("Click to open file")
+                        )))
+                );
+                info(message);
+            } catch (IOException e) {
+                error(e.getMessage());
+            } finally {
+                lines = 0;
+                writer = null;
+            }
+        });
+    }
+
+    @Override
+    public String getInfoString() {
+        if (outputFile == null) return null;
+        return outputFile.getName() + " | " + lines;
+    }
+
+    private void createWriter() {
+        try {
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+                outputFile,
+                writeMode.get() == WriteMode.append
+            )));
+        } catch (FileNotFoundException e) {
+            error("Failed to open file for writing: " + e.getMessage());
+            toggle();
+        }
+    }
+
+    private boolean isInvalidFile(File file) {
+        if (file == null) return true;
+        if (!file.exists()) {
+            error("File does not exist");
+            return true;
+        }
+        if (!file.isFile()) {
+            error("The specified path is a directory, not a file");
+            return true;
+        }
+        if (!file.canWrite()) {
+            error("File is not writable");
+            return true;
+        }
+        return false;
+    }
+
+    private enum WriteMode {
+        overwrite,
+        append
+    }
+
+    private enum YLevel {
+        Floor(4),
+        Ceiling(123);
+
+        private final int value;
+
+        YLevel(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+}

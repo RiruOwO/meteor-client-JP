@@ -5,6 +5,7 @@
 
 package meteordevelopment.meteorclient.mixin;
 
+
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
@@ -57,6 +58,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.concurrent.CompletableFuture;
+
+import net.minecraft.world.item.ItemStackTemplate;
+import java.util.List;
+import java.util.Optional;
 
 @Mixin(value = Minecraft.class, priority = 1001)
 public abstract class MinecraftMixin implements IMinecraft {

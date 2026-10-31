@@ -9,7 +9,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 
 public class AntiWeb extends Module {
     public AntiWeb() {
-        super(Categories.New, "anti-web", "Prevents you from walking into webs. (but not falling into them)");
+        super(Categories.Combat, "anti-web", "Prevents you from walking into webs. (but not falling into them)");
     }
 
     @EventHandler
