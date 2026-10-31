@@ -5,7 +5,6 @@
 
 package meteordevelopment.meteorclient.systems.modules.player;
 
-
 import meteordevelopment.meteorclient.events.entity.player.StartBreakingBlockEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.settings.*;
@@ -21,6 +20,7 @@ import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
@@ -38,7 +38,6 @@ public class AutoTool extends Module {
     private final SettingGroup sgWhitelist = settings.createGroup("Whitelist");
 
     // General
-
     private final Setting<EnchantPreference> prefer = sgGeneral.add(new EnumSetting.Builder<EnchantPreference>()
         .name("prefer")
         .description("Either to prefer Silk Touch, Fortune, or none.")
@@ -77,10 +76,18 @@ public class AutoTool extends Module {
         .build()
     );
 
+    public final Setting<Boolean> fakeMode = sgGeneral.add(new BoolSetting.Builder()
+        .name("fake-mode")
+        .description("サーバーにはツールを持っていると通知しますが、1人称の見た目は変えません。")
+        .defaultValue(false)
+        .build()
+    );
+
     private final Setting<Boolean> switchBack = sgGeneral.add(new BoolSetting.Builder()
         .name("switch-back")
         .description("Switches your hand to whatever was selected when releasing your attack key.")
         .defaultValue(false)
+        .visible(() -> !fakeMode.get())
         .build()
     );
 
@@ -92,7 +99,6 @@ public class AutoTool extends Module {
     ));
 
     // Whitelist and blacklist
-
     private final Setting<ListMode> listMode = sgWhitelist.add(new EnumSetting.Builder<ListMode>()
         .name("list-mode")
         .description("Selection mode.")
@@ -121,6 +127,11 @@ public class AutoTool extends Module {
     private int ticks;
     private int bestSlot;
 
+    // Fakeモード用に元のスロットを記憶
+    public int originalSlot = -1;
+    // Fakeモードでサーバーに通知済みのスロット
+    private int fakeCurrentSlot = -1;
+
     public AutoTool() {
         super(Categories.Player, "auto-tool", "Automatically switches to the most effective tool when performing an action.");
     }
@@ -129,14 +140,31 @@ public class AutoTool extends Module {
     private void onTick(TickEvent.Post event) {
         if (Modules.get().isActive(InfinityMiner.class)) return;
 
-        if (switchBack.get() && !mc.options.keyAttack.isDown() && wasPressed && InvUtils.previousSlot != -1) {
+        // Fakeモードで攻撃キーを離したら元のスロットに戻す
+        if (fakeMode.get() && originalSlot != -1 && !mc.options.keyAttack.isDown()) {
+            mc.getConnection().send(new ServerboundSetCarriedItemPacket(originalSlot));
+            fakeCurrentSlot = originalSlot;
+            originalSlot = -1;
+        }
+
+        if (switchBack.get() && !fakeMode.get() && !mc.options.keyAttack.isDown() && wasPressed && InvUtils.previousSlot != -1) {
             InvUtils.swapBack();
             wasPressed = false;
             return;
         }
 
         if (ticks <= 0 && shouldSwitch && bestSlot != -1) {
-            InvUtils.swap(bestSlot, switchBack.get());
+            if (fakeMode.get()) {
+                if (originalSlot == -1) {
+                    originalSlot = mc.player.getInventory().getSelectedSlot();
+                }
+                if (fakeCurrentSlot != bestSlot) {
+                    mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
+                    fakeCurrentSlot = bestSlot;
+                }
+            } else {
+                InvUtils.swap(bestSlot, switchBack.get());
+            }
             shouldSwitch = false;
         } else {
             ticks--;
@@ -150,11 +178,10 @@ public class AutoTool extends Module {
         if (Modules.get().isActive(InfinityMiner.class)) return;
         if (mc.player.isCreative()) return;
 
-        // Get blockState
+
         BlockState blockState = mc.level.getBlockState(event.blockPos);
         if (!BlockUtils.canBreak(event.blockPos, blockState)) return;
 
-        // Check if we should switch to a better tool
         ItemStack currentStack = mc.player.getMainHandItem();
 
         double bestScore = -1;
@@ -175,14 +202,31 @@ public class AutoTool extends Module {
             }
         }
 
-        if ((bestSlot != -1 && (bestScore > getScore(currentStack, blockState, silkTouchForEnderChest.get(), fortuneForOresCrops.get(), prefer.get(), itemStack -> !shouldStopUsing(itemStack))) || shouldStopUsing(currentStack) || !isTool(currentStack))) {
+        double currentScore = getScore(currentStack, blockState, silkTouchForEnderChest.get(), fortuneForOresCrops.get(), prefer.get(), itemStack -> !shouldStopUsing(itemStack));
+        boolean stopUsing = shouldStopUsing(currentStack);
+        boolean currentIsTool = isTool(currentStack);
+
+        if ((bestSlot != -1 && (bestScore > currentScore || stopUsing || !currentIsTool))) {
+
             ticks = switchDelay.get();
 
-            if (ticks == 0) InvUtils.swap(bestSlot, true);
-            else shouldSwitch = true;
+            if (ticks == 0) {
+                if (fakeMode.get()) {
+                    if (originalSlot == -1) {
+                        originalSlot = mc.player.getInventory().getSelectedSlot();
+                    }
+                    if (fakeCurrentSlot != bestSlot) {
+                        mc.getConnection().send(new ServerboundSetCarriedItemPacket(bestSlot));
+                        fakeCurrentSlot = bestSlot;
+                    }
+                } else {
+                    InvUtils.swap(bestSlot, true);
+                }
+            } else {
+                shouldSwitch = true;
+            }
         }
 
-        // Anti break
         currentStack = mc.player.getMainHandItem();
 
         if (shouldStopUsing(currentStack) && isTool(currentStack)) {
@@ -202,30 +246,17 @@ public class AutoTool extends Module {
             !(itemStack.getItem() instanceof ShearsItem && state.getBlock() instanceof LeavesBlock || state.is(BlockTags.WOOL)))
             return -1;
 
-        if (silkTouchEnderChest
-            && state.getBlock() == Blocks.ENDER_CHEST
-            && !Utils.hasEnchantments(itemStack, Enchantments.SILK_TOUCH)) {
-            return -1;
-        }
-
-        if (fortuneOre
-            && isFortunable(state.getBlock())
-            && !Utils.hasEnchantments(itemStack, Enchantments.FORTUNE)) {
-            return -1;
-        }
+        if (silkTouchEnderChest && state.getBlock() == Blocks.ENDER_CHEST && !Utils.hasEnchantments(itemStack, Enchantments.SILK_TOUCH)) return -1;
+        if (fortuneOre && isFortunable(state.getBlock()) && !Utils.hasEnchantments(itemStack, Enchantments.FORTUNE)) return -1;
 
         double score = 0;
-
         score += itemStack.getDestroySpeed(state) * 1000;
         score += Utils.getEnchantmentLevel(itemStack, Enchantments.UNBREAKING);
         score += Utils.getEnchantmentLevel(itemStack, Enchantments.EFFICIENCY);
         score += Utils.getEnchantmentLevel(itemStack, Enchantments.MENDING);
 
-        if (enchantPreference == EnchantPreference.Fortune)
-            score += Utils.getEnchantmentLevel(itemStack, Enchantments.FORTUNE);
-        if (enchantPreference == EnchantPreference.SilkTouch)
-            score += Utils.getEnchantmentLevel(itemStack, Enchantments.SILK_TOUCH);
-
+        if (enchantPreference == EnchantPreference.Fortune) score += Utils.getEnchantmentLevel(itemStack, Enchantments.FORTUNE);
+        if (enchantPreference == EnchantPreference.SilkTouch) score += Utils.getEnchantmentLevel(itemStack, Enchantments.SILK_TOUCH);
         if (itemStack.is(ItemTags.SWORDS) && (state.getBlock() instanceof BambooStalkBlock || state.getBlock() instanceof BambooSaplingBlock))
             score += 9000 + (itemStack.get(DataComponents.TOOL).getMiningSpeed(state) * 1000);
 
@@ -250,5 +281,4 @@ public class AutoTool extends Module {
         Fortune,
         SilkTouch
     }
-
 }
