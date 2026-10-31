@@ -21,7 +21,7 @@ import static meteordevelopment.meteorclient.utils.Utils.getWindowHeight;
 import static meteordevelopment.meteorclient.utils.Utils.getWindowWidth;
 
 public class ListModulesScreen extends TabScreen {
-    private WVerticalList moduleListContainer; // リスト専用コンテナ（ここだけを更新する）
+    private WVerticalList moduleListContainer;
     private Category selected = null;
     private Module selectedModule = null;
     private String searchText = "";
@@ -33,18 +33,38 @@ public class ListModulesScreen extends TabScreen {
 
     @Override
     public void initWidgets() {
-        // 画面左上に固定で配置するための水平レイアウト
-        WHorizontalList layout = add(theme.horizontalList()).widget();
+        // 画面全体を縦に並べるレイアウト（中央寄せ）
+        WVerticalList rootLayout = add(theme.verticalList()).center().widget();
 
         // ==========================================
-        // 左側：カテゴリ一覧ウィンドウ（固定・スクロールなし）
+        // 上部：検索バー
         // ==========================================
+        WWindow searchWindow = theme.window("Search");
+        searchWindow.id = "search-window";
+
+        // 横幅が広がりすぎないよう、expandX() は付けない
+        rootLayout.add(searchWindow).widget();
+
+        // 検索ボックスの最小幅を指定して見やすくする
+        search = searchWindow.add(theme.textBox(searchText)).minWidth(400).widget();
+        search.setFocused(true);
+        search.action = () -> {
+            searchText = search.get();
+            updateModuleList();
+        };
+
+        // ==========================================
+        // 下部：左右分割されたウィンドウ
+        // ==========================================
+        WHorizontalList mainLayout = rootLayout.add(theme.horizontalList()).center().widget();
+
+        // 左側：カテゴリ一覧
         WWindow sidebarWindow = theme.window("Categories");
         sidebarWindow.id = "categories-window";
-        layout.add(sidebarWindow).widget();
+        mainLayout.add(sidebarWindow).widget();
         sidebarWindow.view.scrollOnlyWhenMouseOver = false;
         sidebarWindow.view.hasScrollBar = false;
-        sidebarWindow.view.maxHeight = 9999;
+        sidebarWindow.view.maxHeight = 480;
 
         var allBtn = sidebarWindow.add(theme.button("All")).expandX().widget();
         allBtn.action = () -> {
@@ -62,33 +82,22 @@ public class ListModulesScreen extends TabScreen {
             };
         }
 
-        // ==========================================
-        // 右側：モジュール一覧ウィンドウ（スクロール可能）
-        // ==========================================
+        // 右側：モジュール一覧
         WWindow contentWindow = theme.window("Modules");
         contentWindow.id = "modules-window";
-        layout.add(contentWindow).widget();
+        mainLayout.add(contentWindow).widget();
         contentWindow.view.scrollOnlyWhenMouseOver = true;
         contentWindow.view.hasScrollBar = true;
-        contentWindow.view.maxHeight = 520;
+        contentWindow.view.maxHeight = 480;
 
-        // 検索欄の作成（最初の1回だけ。これ以降、検索時に破棄されない）
-        //search = contentWindow.add(theme.textBox(searchText)).minWidth(300).expandX().widget();
-        //search.setFocused(true);
-        //search.action = () -> {
-        //   searchText = search.get();
-        //    updateModuleList(); // リスト部分だけを更新
-        //};
-        contentWindow.add(theme.horizontalSeparator()).expandX();
-
-        // リスト専用のコンテナ（ここだけをクリアして再描画する）
+        // モジュールリスト専用のコンテナ
         moduleListContainer = contentWindow.add(theme.verticalList()).widget();
 
         // 初回描画
         updateModuleList();
     }
 
-    // リスト部分（または設定画面）だけを更新するメソッド
+    // モジュールリスト（または設定画面）だけを更新するメソッド
     private void updateModuleList() {
         if (moduleListContainer == null) return;
         moduleListContainer.clear(); // リスト部分だけをクリア
@@ -105,7 +114,7 @@ public class ListModulesScreen extends TabScreen {
                     && !module.title.toLowerCase().contains(filter)
                     && !module.name.toLowerCase().contains(filter)) continue;
 
-                // ★ ここは元のコードのまま（標準デザインを維持）
+                // 標準のモジュールウィジェットを追加
                 moduleListContainer.add(theme.module(module)).expandX();
             }
         }
@@ -166,9 +175,8 @@ public class ListModulesScreen extends TabScreen {
         renderer.popScale();
     }
 
-    // WMeteorModule からの呼び出し用
     public void openSettings(Module module) {
         selectedModule = module;
-        updateModuleList(); // reload() を呼ばない
+        updateModuleList();
     }
 }

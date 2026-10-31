@@ -504,7 +504,7 @@ public class Modules extends System<Modules> {
         add(new Slippy());
         add(new Sneak());
         add(new Speed());
-        add(new Spider());
+        //add(new Spider());
         add(new Sprint());
         add(new Step());
         add(new TridentBoost());
@@ -518,7 +518,7 @@ public class Modules extends System<Modules> {
         add(new BlockSelection());
         add(new Blur());
         add(new BossStack());
-        add(new Breadcrumbs());
+        //add(new Breadcrumbs());
         add(new BreakIndicators());
         add(new CameraTweaks());
         add(new Chams());
