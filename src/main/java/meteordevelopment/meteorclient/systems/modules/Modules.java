@@ -554,6 +554,8 @@ public class Modules extends System<Modules> {
         add(new ChinaHat());
         add(new AntiAim());
         add(new ShulkerPreview());
+        add(new Explosions());
+
     }
 
     private void initWorld() {
@@ -608,6 +610,5 @@ public class Modules extends System<Modules> {
     }
 
     private void initNew() {
-
     }
 }

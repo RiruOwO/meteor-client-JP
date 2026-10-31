@@ -35,7 +35,7 @@ public class PacketEat extends Module {
     private int timer = 0;
 
     public PacketEat() {
-        super(Categories.New, "packet-eat", "モーションなしで食べます。");
+        super(Categories.Player, "packet-eat", "モーションなしで食べます。");
     }
 
     @Override
