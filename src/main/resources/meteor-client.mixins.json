@@ -199,8 +199,7 @@
     "WebBlockMixin",
     "WingsLayerMixin",
     "WorldBorderMixin",
-    "ShulkerBoxBlockEntityMixin",
-    "HeldItemRendererMixin"
+    "ShulkerBoxBlockEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
