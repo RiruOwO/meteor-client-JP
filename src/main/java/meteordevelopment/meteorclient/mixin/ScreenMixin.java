@@ -29,6 +29,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static com.mojang.blaze3d.platform.InputConstants.*;
 
+import net.minecraft.client.gui.GuiGraphicsExtractor; // GuiGraphics から変更
+import net.minecraft.resources.Identifier; // ResourceLocation から変更
+import net.minecraft.client.renderer.RenderPipelines; // 追加
+
+import meteordevelopment.meteorclient.systems.modules.custom.GuiImageDisplay;
+
 @Mixin(value = Screen.class, priority = 500) // needs to be before baritone
 public abstract class ScreenMixin {
 
@@ -66,5 +72,25 @@ public abstract class ScreenMixin {
         if ((guiMove.disableArrows() && meteor$isArray(event.key())) || (guiMove.disableSpace() && event.key() == KEY_SPACE)) {
             cir.setReturnValue(true);
         }
+    }
+
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void onRenderTail(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        GuiImageDisplay module = Modules.get().get(GuiImageDisplay.class);
+        if (module == null || !module.isActive()) return;
+
+        Identifier texture = module.selectedCharacter.get().getIdentifier();
+
+        int x = module.xOffset.get().intValue();
+        int y = module.yOffset.get().intValue();
+        int width = module.imageWidth.get();
+        int height = module.imageHeight.get();
+
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture,
+            x, y,
+            0, 0,
+            width, height,
+            width, height
+        );
     }
 }
