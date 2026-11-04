@@ -31,7 +31,7 @@ import static meteordevelopment.meteorclient.MeteorClient.mc;
 public class Hud extends System<Hud> implements Iterable<HudElement> {
     public static final HudGroup GROUP = new HudGroup("Meteor");
 
-    public boolean active;
+    public boolean active = true;
     public Settings settings = new Settings();
 
     public final Map<String, HudElementInfo<?>> infos = new TreeMap<>();
@@ -46,7 +46,7 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
     private final Setting<Boolean> customFont = sgGeneral.add(new BoolSetting.Builder()
         .name("custom-font")
         .description("Text will use custom font.")
-        .defaultValue(true)
+        .defaultValue(false)
         .onChanged(_ -> {
             for (HudElement element : elements) element.onFontChanged();
         })
